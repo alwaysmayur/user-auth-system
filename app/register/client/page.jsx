@@ -1,8 +1,9 @@
 "use client"
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2';
-
 export default function Component() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     fname: '',
     lname: '',
@@ -11,6 +12,8 @@ export default function Component() {
     confirmPassword: '',
     role: 'client'
   });
+
+  const [ShowPass, setShowPass] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -86,7 +89,12 @@ export default function Component() {
           title: "Success!",
           text: data.message,
           icon: "success"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/login");
+          }
         });
+
       } else {
         // Registration failed, handle accordingly
         Swal.fire({
@@ -152,13 +160,16 @@ export default function Component() {
           />
         </div>
         <div>
-          <div className="mb-2 w-full block">
+          <div className="mb-2 w-full flex justify-between">
             <label htmlFor="password">Password</label>
+            <p className="cursor-pointer"onClick={() => {
+              setShowPass(!ShowPass)
+            }}>{ShowPass ? "Hide" : "Show"}</p>
           </div>
           <input
             className="border rounded-md w-full text-black py-0.5 px-2"
             id="password"
-            type="password"
+            type={ShowPass ?  "text" :"password"}
             value={formData.password}
             onChange={handleChange}
 
@@ -171,7 +182,7 @@ export default function Component() {
           <input
             className="border rounded-md w-full text-black py-0.5 px-2"
             id="confirmPassword"
-            type="password"
+            type={ShowPass ?  "text" :"password"}
             value={formData.confirmPassword}
             onChange={handleChange}
 

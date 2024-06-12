@@ -1,16 +1,20 @@
 "use client"
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2';
-
 export default function Component() {
+  const router = useRouter()
+
   const [formData, setFormData] = useState({
     fname: '',
     lname: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role:'admin'
+    role: 'admin'
   });
+
+  const [ShowPass, setShowPass] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,13 +25,7 @@ export default function Component() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    Swal.fire({
-      title: "Please Wait",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
+
     // Validation for first name
     if (formData.fname.trim() === '') {
       Swal.fire({
@@ -37,7 +35,7 @@ export default function Component() {
       });
       return;
     }
-  
+
     // Validation for last name
     if (formData.lname.trim() === '') {
       Swal.fire({
@@ -47,7 +45,7 @@ export default function Component() {
       });
       return;
     }
-  
+
     // Perform email validation
     const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(formData.email)) {
@@ -58,7 +56,17 @@ export default function Component() {
       });
       return;
     }
-    
+    // Perform password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      Swal.fire({
+        title: "Oops!",
+        text: "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, and one number.",
+        icon: "error"
+      });
+      return;
+    }
+
     // Perform password validation
     if (formData.password !== formData.confirmPassword) {
       Swal.fire({
@@ -68,9 +76,16 @@ export default function Component() {
       });
       return;
     }
-  
+
     // Call API to register user
     try {
+      Swal.fire({
+        title: "Please Wait",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
@@ -78,17 +93,18 @@ export default function Component() {
         },
         body: JSON.stringify(formData)
       });
-      const data = await response.json(); // Await the response.json()
+      const data = await response.json();
       if (data.status == 201) {
-        // Check if the response was successful (status code 200-299)
-        // Registration successful, handle accordingly
         Swal.fire({
           title: "Success!",
           text: data.message,
           icon: "success"
-        });
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/login");
+          }
+        });;;
       } else {
-        // Registration failed, handle accordingly
         Swal.fire({
           title: "Oops!",
           text: data.message || 'An error occurred. Please try again later.',
@@ -105,7 +121,7 @@ export default function Component() {
       });
     }
   };
-  
+
   return (
     <div className="container text-black w-screen h-screen justify-center flex content-center items-center bg-white">
       <form onSubmit={handleSubmit} className="flex p-10 rounded-md shadow-md border w-96 flex-col gap-4">
@@ -120,7 +136,7 @@ export default function Component() {
             type="text"
             value={formData.fname}
             onChange={handleChange}
-            
+
           />
         </div>
         <div>
@@ -133,7 +149,7 @@ export default function Component() {
             type="text"
             value={formData.lname}
             onChange={handleChange}
-            
+
           />
         </div>
         <div>
@@ -146,20 +162,23 @@ export default function Component() {
             type="email"
             value={formData.email}
             onChange={handleChange}
-            
+
           />
         </div>
         <div>
-          <div className="mb-2 w-full block">
+          <div className="mb-2 w-full flex justify-between">
             <label htmlFor="password">Password</label>
+            <p className="cursor-pointer"onClick={() => {
+              setShowPass(!ShowPass)
+            }}>{ShowPass ? "Hide" : "Show"}</p>
           </div>
           <input
             className="border rounded-md w-full text-black py-0.5 px-2"
             id="password"
-            type="password"
+            type={ShowPass ?  "text" :"password"}
             value={formData.password}
             onChange={handleChange}
-            
+
           />
         </div>
         <div>
@@ -169,10 +188,10 @@ export default function Component() {
           <input
             className="border rounded-md w-full text-black py-0.5 px-2"
             id="confirmPassword"
-            type="password"
+            type={ShowPass ?  "text" :"password"}
             value={formData.confirmPassword}
             onChange={handleChange}
-            
+
           />
         </div>
         <button type="submit" className="border bg-green-400 rounded-md shadow-sm py-1  text-white font-bold">
